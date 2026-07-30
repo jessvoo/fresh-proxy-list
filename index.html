@@ -12,7 +12,6 @@
     <meta name="robots" content="index, follow">
     <title>Fresh Proxy List</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-Y"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -100,73 +99,84 @@
                 font-size: 12px;
             }
         }
+
+        .genre-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .genre-buttons button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #6200ea;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .genre-buttons button:hover {
+            background-color: #3700b3;
+        }
+
+        .modal-content h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
-<div ng-app="freshproxy">
-    <div class="container" data-ng-controller="proxyTableCtrl">
+<div>
+    <div class="container">
         <div class="row" style="text-align: center">
             <hr>
-            <h2>{{ title }}</h2>
+            <h2 id="title">Movie Database</h2>
             <a href="https://github.com/vakhov/fresh-proxy-list" style="color: #03dac6;">View on Github</a>
-            <h4 ng-show="title==='Proxies'">Last Updated on {{ lastUpdated | date }}</h4>
+            <h4 id="subtitle">Select movies by genre</h4>
             <hr>
         </div>
         <div class="row" style="text-align: center">
-            <button class="btn btn-primary" onclick="window.open('/fresh-proxy-list/proxylist.json')">Download as JSON
-            </button>
-            <button class="btn btn-primary" onclick="window.open('/fresh-proxy-list/proxylist.csv')">Download as CSV
-            </button>
-            <button class="btn btn-primary" onclick="window.open('/fresh-proxy-list/proxylist.txt')">Download as TXT
-            </button>
-            <button class="btn btn-primary" onclick="window.open('/fresh-proxy-list/proxylist.phps')">Download as PHP
-            </button>
-            <button class="btn btn-primary" onclick="window.open('/fresh-proxy-list/proxylist.xml')">Download as XML
-            </button>
-            <button class="btn btn-success" onclick="exportToCSV()">Export All Proxies</button>
-            <button class="btn btn-danger" ng-click="clearCache()">Refresh Data</button>
+            <button class="btn btn-primary" onclick="show_filme_filter()">Filme filtern</button>
+            <button class="btn btn-success" onclick="showAllMovies()">Show All Movies</button>
+            <button class="btn btn-danger" onclick="clearMovieData()">Clear Data</button>
             <hr>
         </div>
-        <div class="row" ng-show="title==='Proxies'">
+        
+        <!-- Genre Selection Modal -->
+        <div id="genreModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+            <div class="modal-content" style="background-color: #2c2c2c; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 5px;">
+                <span class="close" onclick="closeGenreModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                <h3 style="color: #ff4081; margin-bottom: 20px;">Genre auswählen</h3>
+                <div id="genreList" class="genre-buttons"></div>
+            </div>
+        </div>
+
+        <div class="row" id="movieSection" style="display: none;">
             <div class="table-responsive">
                 <table class="table table-hover" style="text-align: center">
                     <thead>
                     <tr>
                         <td>#</td>
-                        <td>IP</td>
-                        <td>Port</td>
-                        <td>Country code</td>
-                        <td>Country name</td>
-                        <td>City</td>
-                        <td>Type</td>
-                        <td>Anonymity</td>
+                        <td>Title</td>
+                        <td>Genre</td>
+                        <td>Year</td>
+                        <td>Director</td>
+                        <td>Rating</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.ip"></td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.port"></td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.country_code">
-                        </td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.country_name">
-                        </td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.city"></td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.type"></td>
-                        <td><input type="text" placeholder="Search" class="form-control" ng-model="search.anon_verbose">
-                        </td>
+                        <td><input type="text" placeholder="Search" class="form-control" id="searchTitle" onkeyup="filterMovies()"></td>
+                        <td><input type="text" placeholder="Search" class="form-control" id="searchGenre" onkeyup="filterMovies()"></td>
+                        <td><input type="text" placeholder="Search" class="form-control" id="searchYear" onkeyup="filterMovies()"></td>
+                        <td><input type="text" placeholder="Search" class="form-control" id="searchDirector" onkeyup="filterMovies()"></td>
+                        <td><input type="text" placeholder="Search" class="form-control" id="searchRating" onkeyup="filterMovies()"></td>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr ng-repeat="n in data | filter: search">
-                        <td>{{ $index+1 }}</td>
-                        <td>{{ n.ip }}</td>
-                        <td>{{ n.port }}</td>
-                        <td>{{ n.country_code }}</td>
-                        <td>{{ n.country_name }}</td>
-                        <td>{{ n.city }}</td>
-                        <td>{{ n.type }}</td>
-                        <td>{{ n.anon_verbose }}</td>
-                    </tr>
+                    <tbody id="movieTableBody">
                     </tbody>
                 </table>
             </div>
